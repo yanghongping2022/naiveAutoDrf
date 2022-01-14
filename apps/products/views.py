@@ -23,7 +23,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     # 指定分页
     pagination_class = BasePageNumberPagination
     # 筛选类
-    # filterset_fields = ['name', 'creator', 'maintainer']
+    filterset_fields = ['create_at', 'update_at']
 
     def get(self, request):
         """
@@ -47,8 +47,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         #         Q(maintainer__exact=request.user.id) & Q(isActive=True)).order_by('-id')
         # elif request.user.is_superuser is False:
         if request.user.is_superuser is False:
-                self.queryset = self.queryset.filter(
-                    Q(creator=request.user.id) | Q(maintainer__exact=request.user.id) & Q(isActive=True)).order_by('-id')
+            self.queryset = self.queryset.filter(
+                Q(creator=request.user.id) | Q(maintainer__exact=request.user.id) & Q(isActive=True)).order_by('-id')
         if request.GET.get('name'):
             # 模糊查找  项目名称
             self.queryset = self.queryset.filter(name__contains=request.GET.get('name'))
@@ -104,6 +104,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             return BaseResponse(code=CODE_REJECT_ERROR, message=MSG_REJECT_ERROR, data={'error': '项目已删除'})
         if request.user != Product.objects.get(id=pk).creator and request.user.is_superuser is False:
             return BaseResponse(code=CODE_REJECT_ERROR, message=MSG_REJECT_ERROR, data={'error': '没有权限'})
+        if Product.objects.filter(name=request.data.get('name')).exclude(id=pk):
+            return BaseResponse(code=CODE_REJECT_ERROR, message=MSG_REJECT_ERROR, data={'error': '项目名称重复'},
+                                status=status.HTTP_400_BAD_REQUEST)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)

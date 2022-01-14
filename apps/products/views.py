@@ -104,7 +104,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             return BaseResponse(code=CODE_REJECT_ERROR, message=MSG_REJECT_ERROR, data={'error': '项目已删除'})
         if request.user != Product.objects.get(id=pk).creator and request.user.is_superuser is False:
             return BaseResponse(code=CODE_REJECT_ERROR, message=MSG_REJECT_ERROR, data={'error': '没有权限'})
-        if Product.objects.filter(name=request.data.get('name')).exclude(id=pk):
+        if Product.objects.filter(name=request.data.get('name'),isActive=False).exclude(id=pk):
             return BaseResponse(code=CODE_REJECT_ERROR, message=MSG_REJECT_ERROR, data={'error': '项目名称重复'},
                                 status=status.HTTP_400_BAD_REQUEST)
         partial = kwargs.pop('partial', False)
